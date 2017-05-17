@@ -1,7 +1,7 @@
 process.stdin.resume();
 
 var nightmare = require('nightmare')({
-	show: true
+	show: false
 })
 var fs = require('fs')
 var data = []
@@ -10,13 +10,13 @@ var searches = alphabet.map(l => l + ',')
 var counter = 0;
 
 function lookUp(nightmare, search) {
-	console.log(search, searches.length)
+//	console.log(search, counter)
 	nightmare
 		.evaluate(search => {
 			$('#SearchString').val(search)
 		}, search)
 		.click('#submitButton')
-		.wait(100)
+		.wait(250)
 		.wait('.site-title')
 		.evaluate(() => {
 			$('.site-title').removeClass('site-title')
@@ -45,13 +45,14 @@ function lookUp(nightmare, search) {
 			}
 		})
 		.then(result => {
+			console.log(search, result.arr?result.arr.length:'')
 			if (result.status == 'many') { // then we need to be more specific
 				counter = 0
 				searches = alphabet.map(a => search + a).concat(searches)
 			} else if (result.status == 'good') { // then append our results
-				counter += result.length;
+				counter += result.arr.length;
 				data = data.concat(result.arr)
-			} else if (search[search.length - 1] == alphabet[alphabet.length - 1] && counter < 20) {
+			} else if (search[search.length - 1] == alphabet[alphabet.length - 1] && counter <= 50) {
 				// for cases when we need to have a more specific last name
 				counter = 0
 				searches = alphabet.map(a => search.slice(0,-1).replace(',', a + ',')).concat(searches)
