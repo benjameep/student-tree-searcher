@@ -1,11 +1,11 @@
-//process.stdin.resume();
+process.stdin.resume();
 
 var nightmare = require('nightmare')({
-	show: false
+	show: true
 })
 var fs = require('fs')
 var data = []
-var alphabet = 'becdfghijklmnopqrstuvwxyz'.split('')
+var alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
 var searches = alphabet.map(l => l + ',')
 var counter = 0;
 
@@ -16,8 +16,10 @@ function lookUp(nightmare, search) {
 			$('#SearchString').val(search)
 		}, search)
 		.click('#submitButton')
-		.wait(400)
+		.wait(100)
+		.wait('.site-title')
 		.evaluate(() => {
+			$('.site-title').removeClass('site-title')
 			var html = $('.students > div:last-child').html()
 			switch (html.length) {
 				case 50: // None
@@ -50,11 +52,9 @@ function lookUp(nightmare, search) {
 				counter += result.length;
 				data = data.concat(result.arr)
 			} else if (search[search.length - 1] == alphabet[alphabet.length - 1] && counter < 20) {
-				console.log(search[search.length - 1], alphabet[alphabet.length - 1])
 				// for cases when we need to have a more specific last name
 				counter = 0
-				search.pop()
-				searches = alphabet.map(a => search.replace(',', a + ',')).concat(searches)
+				searches = alphabet.map(a => search.slice(0,-1).replace(',', a + ',')).concat(searches)
 			}
 			// go to next, if there is one
 			if (searches.length) {
@@ -67,7 +67,9 @@ function lookUp(nightmare, search) {
 }
 
 function save() {
-	fs.writeFileSync('result2.json', JSON.stringify(data))
+	fs.writeFileSync('result.json', JSON.stringify(data))
+	nightmare.end()
+	process.exit()
 }
 
 nightmare
@@ -76,5 +78,5 @@ nightmare
 	.wait(1000)
 lookUp(nightmare, searches.shift())
 
-//process.on('SIGINT', save);
-//process.on('uncaughtException', save);
+process.on('SIGINT', save);
+process.on('uncaughtException', save);
